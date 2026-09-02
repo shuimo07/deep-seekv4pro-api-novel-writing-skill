@@ -35,19 +35,37 @@ echo "7. POV滑移(主角):"
 grep -n '主角' "$F" || echo "   无"
 echo ""
 
-echo "8. 大段(超过5句连续以。结尾):"
-awk 'BEGIN{c=0} /。/ {c++} /^$/ {if(c>5) print "   "NR-1": "c"句连续"; c=0} END{}' "$F"
+echo "8. 大段(每段超过5句):"
+python3 -c "
+import re
+with open('$F','r',encoding='utf-8') as fh:
+    text=fh.read()
+paras=text.split('\n\n')
+found=False
+for i,p in enumerate(paras):
+    lines=[l for l in p.split('\n') if l.strip()]
+    if not lines: continue
+    cnt=sum(len(re.findall(r'[。？！]',l)) for l in lines)
+    if cnt>5:
+        print(f'   第{i+1}段: {cnt}句')
+        found=True
+if not found: print('   无')
+" 2>/dev/null || echo "   (python3不可用)"
 echo ""
 
 echo "9. 正文内章节编号引用(Ch+数字):"
 grep -n 'Ch[0-9]' "$F" || echo "   无"
 echo ""
 
-echo "10. 鲜明时间指引(第一天/第二天/第三天):"
+echo "10. 解释说明句(理解了/知道了/和当年/和.*时.*一模一样):"
+grep -n '理解了\|这才知道\|不知道.*会\|不知道.*有一天\|和当年\|和进化前\|和.*时看.*的眼神一模一样' "$F" || echo "   无"
+echo ""
+
+echo "11. 鲜明时间指引(第一天/第二天/第三天):"
 grep -n '第[一二三四五六七八九]天\|第一天\|第二天\|第三天\|第四天' "$F" || echo "   无"
 echo ""
 
-echo "11. 字数估算:"
+echo "12. 字数估算:"
 python3 -c "
 import re
 with open('$F','r',encoding='utf-8') as fh:
@@ -55,6 +73,10 @@ with open('$F','r',encoding='utf-8') as fh:
 cn=len(re.findall(r'[一-鿿]',text))
 print(f'   纯汉字: {cn}字')
 " 2>/dev/null || echo "   (python3不可用)"
+echo ""
+
+echo "13. 副词禁用(见CLAUDE.md铁律清单; 量词'只'/名词'王都/太阳'/'归还'动词义/否定词'不没'除外):"
+grep -n '轻轻\|悄悄\|慢慢\|缓缓\|徐徐\|静静\|默默\|狠狠\|匆匆\|渐渐\|忽然\|突然\|顿时\|立刻\|马上\|终于\|始终\|一直\|已经\|曾经\|正在\|常常\|经常\|总是\|偶尔\|不断\|果然\|居然\|竟然\|简直\|难道\|大概\|也许\|或许\|其实\|反正\|偏偏\|根本\|明明\|仍然\|依然\|急忙\|赶紧\|猛然\|纷纷\|独自\|暗暗\|微微\|隐隐\|早已\|向来\|一再\|连连\|十分\|非常\|极其\|格外\|相当\|特别\|未免\|无非\|难怪\|不料\|很\|太\|又\|再\|也\|却\|仍\|竟\|就' "$F" || echo "   无"
 echo ""
 
 echo "========== 检查完成 =========="
